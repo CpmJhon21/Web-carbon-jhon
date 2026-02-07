@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Code Generator</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --border-light: rgba(255, 255, 255, 0.1);
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --grid-color: rgba(255, 255, 255, 0.03);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.3);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            
+            /* Grid background */
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: -1px -1px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-top: 2rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 12px 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Styles */
+        .panel {
+            background: var(--surface-color);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .panel-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-content {
+            padding: 2rem;
+        }
+
+        /* Editor */
+        .editor-container {
+            position: relative;
+            height: 500px;
+        }
+
+        #codeInput {
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-primary);
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            tab-size: 2;
+        }
+
+        #codeInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .editor-stats {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1rem;
+            border: 1px solid var(--border-light);
+        }
+
+        /* Settings */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        select, input {
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Preview */
+        .preview-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border-light);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #generatedImage {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: none;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .preview-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .preview-placeholder p {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .image-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 10;
+            border-radius: var(--radius-md);
+        }
+
+        /* Action Buttons */
+        .actions-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            color: white;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-light);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #10b981);
+            color: white;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Result Container */
+        #resultContainer {
+            margin-top: 3rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #resultContainer.show {
+            opacity: 1;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--surface-color);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transform: translateX(100%);
+            animation: slideInToast 0.3s ease forwards;
+            border: 1px solid var(--border-color);
+        }
+
+        @keyframes slideInToast {
+            to { transform: translateX(0); }
+        }
+
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--danger-color); }
+        .toast.warning { border-left-color: var(--warning-color); }
+
+        .toast-icon {
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .main-grid {
+                gap: 1rem;
+            }
+            
+            .panel-content {
+                padding: 1.5rem;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-row {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .editor-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Header -->
+        <header class="animate-fade-in">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="code-2"></i>
+                </div>
+                <span>CARBON</span>
+            </div>
+            <h1>Code Image Generator</h1>
+            <p class="subtitle">
+                Transform your code snippets into beautiful, shareable images with syntax highlighting and custom styling
+            </p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Left Panel: Editor & Settings -->
+            <div class="panel animate-slide-in" style="animation-delay: 0.1s">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i data-lucide="file-code"></i>
+                        Code Editor
+                    </div>
+                    <div class="editor-stats">
+                        <span id="charCount">0 chars</span>
+                        <span id="lineCount">1 line</span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="editor-container">
+                        <textarea 
+                            id="codeInput" 
+                            placeholder="// Paste or type your code here...
+// Supports all programming languages
+// Try with JavaScript, Python, HTML, CSS, etc.
+
+function helloWorld() {
+    console.log('Hello, Carbon Generator!');
+    return 'Beautiful code images';
+}" 
+                            spellcheck="false"
+                        ></textarea>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i data-lucide="palette"></i>
+                                Theme
+                            </label>
+                            <select id="themeSelect">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="solarized">Solarized</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i data-lucide="type"></i>
+                                Font Family
+                            </label>
+                            <select id="fontSelect">
+                                <option value="Fira Code">Fira Code</option>
+                                <option value="JetBrains Mono">JetBrains Mono</option>
+                                <option value="Cascadia Code">Cascadia Code</option>
+                                <option value="Source Code Pro">Source Code Pro</option>
+                                <option value="Monaco">Monaco</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i data-lucide="text-cursor"></i>
+                                Font Size
+                            </label>
+                            <select id="fontSizeSelect">
+                                <option value="12px">Small (12px)</option>
+                                <option value="14px" selected>Medium (14px)</option>
+                                <option value="16px">Large (16px)</option>
+                                <option value="18px">Extra Large (18px)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i data-lucide="hash"></i>
+                                Language
+                            </label>
+                            <select id="languageSelect">
+                                <option value="auto">Auto Detect</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C++</option>
+                                <option value="go">Go</option>
+                                <option value="rust">Rust</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="typescript">TypeScript</option>
+                                <option value="swift">Swift</option>
+                                <option value="kotlin">Kotlin</option>
+                                <option value="shell">Shell</option>
+                                <option value="sql">SQL</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="actions-row">
+                        <button id="btnGenerate" class="btn btn-primary">
+                            <i data-lucide="zap"></i>
+                            Generate Image
+                        </button>
+                        <button id="btnClear" class="btn btn-secondary">
+                            <i data-lucide="trash-2"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Preview -->
+            <div class="panel animate-slide-in" style="animation-delay: 0.2s">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i data-lucide="image"></i>
+                        Preview
+                    </div>
+                    <div id="imageStats" class="editor-stats" style="display: none;">
+                        <span id="imageSize">-</span>
+                        <span id="imageDimensions">-</span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-placeholder" id="previewPlaceholder">
+                            <i data-lucide="image"></i>
+                            <p>Generated image will appear here</p>
+                        </div>
+                        <img id="generatedImage" alt="Generated code image">
+                        <div class="image-loading" id="imageLoading" style="display: none;">
+                            <div class="loading">
+                                <div class="loading-spinner"></div>
+                                <span>Generating image...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Container -->
+        <div id="resultContainer">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i data-lucide="download"></i>
+                        Download & Share
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="result-actions">
+                        <button id="btnDownload" class="btn btn-success">
+                            <i data-lucide="download"></i>
+                            Download PNG
+                        </button>
+                        <button id="btnCopyLink" class="btn btn-secondary">
+                            <i data-lucide="link"></i>
+                            Copy Link
+                        </button>
+                        <button id="btnNew" class="btn btn-secondary">
+                            <i data-lucide="plus"></i>
+                            New Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-links">
+                <a href="/api/health" target="_blank">API Health</a>
+                <a href="#" id="btnViewSource">View Source</a>
+                <a href="#" id="btnReportIssue">Report Issue</a>
+            </div>
+            <p>Carbon Code Generator v1.0.0 • Made with ❤️ for developers</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">
+                All code processing happens on your browser • No data is stored on our servers
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        class CarbonGeneratorApp {
+            constructor() {
+                this.currentImageUrl = null;
+                this.imageMetadata = null;
+                this.apiBaseUrl = window.location.origin;
+                this.isGenerating = false;
+                
+                this.initElements();
+                this.initEvents();
+                this.initIcons();
+                this.updateStats();
+            }
+
+            initElements() {
+                // Input elements
+                this.codeInput = document.getElementById('codeInput');
+                this.themeSelect = document.getElementById('themeSelect');
+                this.fontSelect = document.getElementById('fontSelect');
+                this.fontSizeSelect = document.getElementById('fontSizeSelect');
+                this.languageSelect = document.getElementById('languageSelect');
+                
+                // Button elements
+                this.btnGenerate = document.getElementById('btnGenerate');
+                this.btnClear = document.getElementById('btnClear');
+                this.btnDownload = document.getElementById('btnDownload');
+                this.btnCopyLink = document.getElementById('btnCopyLink');
+                this.btnNew = document.getElementById('btnNew');
+                this.btnViewSource = document.getElementById('btnViewSource');
+                this.btnReportIssue = document.getElementById('btnReportIssue');
+                
+                // Display elements
+                this.generatedImage = document.getElementById('generatedImage');
+                this.previewContainer = document.getElementById('previewContainer');
+                this.previewPlaceholder = document.getElementById('previewPlaceholder');
+                this.imageLoading = document.getElementById('imageLoading');
+                this.resultContainer = document.getElementById('resultContainer');
+                this.toastContainer = document.getElementById('toastContainer');
+                
+                // Stat elements
+                this.charCount = document.getElementById('charCount');
+                this.lineCount = document.getElementById('lineCount');
+                this.imageSize = document.getElementById('imageSize');
+                this.imageDimensions = document.getElementById('imageDimensions');
+                this.imageStats = document.getElementById('imageStats');
+            }
+
+            initIcons() {
+                lucide.createIcons();
+            }
+
+            initEvents() {
+                // Code input events
+                this.codeInput.addEventListener('input', () => this.updateStats());
+                this.codeInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        this.insertTab();
+                    }
+                });
+
+                // Button events
+                this.btnGenerate.addEventListener('click', () => this.generateImage());
+                this.btnClear.addEventListener('click', () => this.clearEditor());
+                this.btnDownload.addEventListener('click', () => this.downloadImage());
+                this.btnCopyLink.addEventListener('click', () => this.copyImageLink());
+                this.btnNew.addEventListener('click', () => this.newImage());
+                this.btnViewSource.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.open('https://github.com/yourusername/carbon-generator', '_blank');
+                });
+                this.btnReportIssue.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.open('https://github.com/yourusername/carbon-generator/issues', '_blank');
+                });
+
+                // Load sample code on first visit
+                if (!localStorage.getItem('carbon_first_visit')) {
+                    this.loadSampleCode();
+                    localStorage.setItem('carbon_first_visit', 'true');
+                }
+            }
+
+            updateStats() {
+                const code = this.codeInput.value;
+                const chars = code.length;
+                const lines = code.split('\n').length;
+                
+                this.charCount.textContent = `${chars} chars`;
+                this.lineCount.textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+                
+                // Update button state
+                this.btnGenerate.disabled = chars === 0;
+            }
+
+            insertTab() {
+                const start = this.codeInput.selectionStart;
+                const end = this.codeInput.selectionEnd;
+                
+                // Insert tab character
+                this.codeInput.value = this.codeInput.value.substring(0, start) + '  ' + this.codeInput.value.substring(end);
+                
+                // Move cursor
+                this.codeInput.selectionStart = this.codeInput.selectionEnd = start + 2;
+                this.codeInput.focus();
+                
+                this.updateStats();
+            }
+
+            loadSampleCode() {
+                const sampleCode = `// Carbon Code Generator
+// Beautiful code images for sharing
+
+function fibonacci(n) {
+    if (n <= 1) return n;
+    
+    let a = 0, b = 1;
+    for (let i = 2; i <= n; i++) {
+        const temp = a + b;
+        a = b;
+        b = temp;
+    }
+    return b;
+}
+
+class User {
+    constructor(name, email) {
+        this.name = name;
+        this.email = email;
+        this.createdAt = new Date();
+    }
+
+    greet() {
+        console.log(\`Hello, \${this.name}!\`);
+        return \`Welcome \${this.name} (\${this.email})\`;
+    }
+
+    static validateEmail(email) {
+        const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+        return re.test(email);
+    }
+}
+
+// Example usage
+const user = new User('John Doe', 'john@example.com');
+console.log(user.greet());
+
+const fib10 = fibonacci(10);
+console.log(\`Fibonacci(10) = \${fib10}\`);
+
+// API Integration example
+async function fetchData() {
+    try {
+        const response = await fetch('/api/data');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}`;
+                
+                this.codeInput.value = sampleCode;
+                this.updateStats();
+            }
+
+            clearEditor() {
+                this.codeInput.value = '';
+                this.codeInput.focus();
+                this.updateStats();
+                this.showToast('Editor cleared', 'success');
+            }
+
+            async generateImage() {
+                const code = this.codeInput.value.trim();
+                
+                if (!code) {
+                    this.showToast('Please enter some code first', 'error');
+                    return;
+                }
+
+                if (code.length > 10000) {
+                    this.showToast('Code too long (max 10000 characters)', 'error');
+                    return;
+                }
+
+                this.isGenerating = true;
+                this.setLoadingState(true);
+
+                try {
+                    const options = {
+                        theme: this.themeSelect.value,
+                        fontFamily: this.fontSelect.value,
+                        fontSize: this.fontSizeSelect.value,
+                        language: this.languageSelect.value,
+                        showLineNumbers: true,
+                        showWindowControls: true,
+                        padding: '40px',
+                        lineHeight: '1.6',
+                        tabSize: 2
+                    };
+
+                    const response = await fetch(`${this.apiBaseUrl}/api/generate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ code, options })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.currentImageUrl = data.image;
+                        this.imageMetadata = data;
+                        
+                        // Show image
+                        this.generatedImage.src = this.currentImageUrl;
+                        this.generatedImage.style.display = 'block';
+                        this.previewPlaceholder.style.display = 'none';
+                        
+                        // Update stats
+                        if (data.dimensions) {
+                            const { width, height } = data.dimensions;
+                            this.imageDimensions.textContent = `${width}×${height}`;
+                            
+                            // Estimate file size
+                            const sizeKB = Math.round(this.currentImageUrl.length * 0.75 / 1024);
+                            this.imageSize.textContent = `${sizeKB} KB`;
+                            
+                            this.imageStats.style.display = 'flex';
+                        }
+                        
+                        // Show result container
+                        this.resultContainer.classList.add('show');
+                        
+                        // Scroll to result
+                        setTimeout(() => {
+                            this.resultContainer.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center' 
+                            });
+                        }, 300);
+                        
+                        this.showToast('Image generated successfully!', 'success');
+                        
+                        // Log to analytics
+                        this.logEvent('generate', { 
+                            length: code.length,
+                            language: options.language,
+                            theme: options.theme 
+                        });
+                    } else {
+                        throw new Error(data.error || 'Failed to generate image');
+                    }
+                } catch (error) {
+                    console.error('Generation error:', error);
+                    
+                    // Try fallback
+                    try {
+                        await this.generateFallbackImage(code);
+                        this.showToast('Using fallback generator', 'warning');
+                    } catch (fallbackError) {
+                        this.showToast(
+                            error.message || 'Failed to generate image. Please try again.',
+                            'error'
+                        );
+                    }
+                } finally {
+                    this.setLoadingState(false);
+                    this.isGenerating = false;
+                }
+            }
+
+            async generateFallbackImage(code) {
+                // Create canvas fallback
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Calculate dimensions
+                const lines = code.split('\n');
+                const lineHeight = 24;
+                const padding = 40;
+                const maxWidth = 800;
+                
+                // Measure text width
+                ctx.font = '14px "Fira Code", monospace';
+                let maxLineWidth = 0;
+                lines.forEach(line => {
+                    const width = ctx.measureText(line).width;
+                    maxLineWidth = Math.max(maxLineWidth, width);
+                });
+                
+                canvas.width = Math.min(maxWidth, maxLineWidth + padding * 2);
+                canvas.height = lines.length * lineHeight + padding * 2;
+                
+                // Draw background
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 1;
+                
+                // Vertical lines
+                for (let x = 0; x <= canvas.width; x += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                
+                // Horizontal lines
+                for (let y = 0; y <= canvas.height; y += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw window header
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, 50);
+                
+                // Window dots
+                const drawDot = (x, color) => {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(x, 25, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                };
+                
+                drawDot(30, '#ff5f56');
+                drawDot(60, '#ffbd2e');
+                drawDot(90, '#27ca3f');
+                
+                // Draw title
+                ctx.fillStyle = '#64748b';
+                ctx.font = '12px "Inter", sans-serif';
+                ctx.fillText('carbon.js', 120, 28);
+                
+                // Draw code
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '14px "Fira Code", monospace';
+                ctx.textBaseline = 'top';
+                
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, padding, 60 + index * lineHeight);
+                });
+                
+                // Convert to data URL
+                this.currentImageUrl = canvas.toDataURL('image/png');
+                this.imageMetadata = {
+                    dimensions: { width: canvas.width, height: canvas.height },
+                    cached: false
+                };
+                
+                // Show image
+                this.generatedImage.src = this.currentImageUrl;
+                this.generatedImage.style.display = 'block';
+                this.previewPlaceholder.style.display = 'none';
+                
+                // Update stats
+                this.imageDimensions.textContent = `${canvas.width}×${canvas.height}`;
+                const sizeKB = Math.round(this.currentImageUrl.length * 0.75 / 1024);
+                this.imageSize.textContent = `${sizeKB} KB`;
+                this.imageStats.style.display = 'flex';
+                
+                // Show result container
+                this.resultContainer.classList.add('show');
+            }
+
+            downloadImage() {
+                if (!this.currentImageUrl) {
+                    this.showToast('No image to download', 'error');
+                    return;
+                }
+
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `carbon-code-${timestamp}.png`;
+                
+                link.href = this.currentImageUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showToast('Download started', 'success');
+                this.logEvent('download', { filename });
+            }
+
+            async copyImageLink() {
+                if (!this.currentImageUrl) {
+                    this.showToast('No image to share', 'error');
+                    return;
+                }
+
+                try {
+                    // Create a Blob from the data URL
+                    const response = await fetch(this.currentImageUrl);
+                    const blob = await response.blob();
+                    
+                    // Copy to clipboard as file
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    await navigator.clipboard.write([item]);
+                    
+                    this.showToast('Image copied to clipboard', 'success');
+                    this.logEvent('copy', { type: 'image' });
+                } catch (error) {
+                    console.error('Copy failed:', error);
+                    
+                    // Fallback: copy data URL
+                    try {
+                        await navigator.clipboard.writeText(this.currentImageUrl);
+                        this.showToast('Image URL copied to clipboard', 'success');
+                    } catch (urlError) {
+                        this.showToast('Failed to copy image', 'error');
+                    }
+                }
+            }
+
+            newImage() {
+                this.currentImageUrl = null;
+                this.imageMetadata = null;
+                
+                this.generatedImage.src = '';
+                this.generatedImage.style.display = 'none';
+                this.previewPlaceholder.style.display = 'block';
+                this.resultContainer.classList.remove('show');
+                this.imageStats.style.display = 'none';
+                
+                this.codeInput.focus();
+                this.showToast('Ready for new image', 'info');
+            }
+
+            setLoadingState(isLoading) {
+                if (isLoading) {
+                    this.btnGenerate.innerHTML = `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <span>Generating...</span>
+                        </div>
+                    `;
+                    this.btnGenerate.disabled = true;
+                    this.imageLoading.style.display = 'flex';
+                } else {
+                    this.btnGenerate.innerHTML = `
+                        <i data-lucide="zap"></i>
+                        Generate Image
+                    `;
+                    this.btnGenerate.disabled = false;
+                    this.imageLoading.style.display = 'none';
+                    lucide.createIcons();
+                }
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    info: 'info',
+                    success: 'check-circle',
+                    error: 'alert-circle',
+                    warning: 'alert-triangle'
+                };
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">
+                        <i data-lucide="${icons[type] || 'info'}"></i>
+                    </div>
+                    <div class="toast-content">
+                        <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close">
+                        <i data-lucide="x"></i>
+                    </button>
+                `;
+                
+                this.toastContainer.appendChild(toast);
+                lucide.createIcons();
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(100%)';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, 5000);
+                
+                // Close button
+                toast.querySelector('.toast-close').addEventListener('click', () => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 300);
+                });
+            }
+
+            logEvent(action, data = {}) {
+                // Simple analytics logging
+                const event = {
+                    action,
+                    timestamp: new Date().toISOString(),
+                    ...data
+                };
+                
+                console.log('Event:', event);
+                
+                // In production, send to analytics service
+                // fetch('/api/analytics', { method: 'POST', body: JSON.stringify(event) });
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new CarbonGeneratorApp();
+        });
+    </script>
+</body>
+</html>
