@@ -24,8 +24,8 @@ A production-ready code snippet image generator with syntax highlighting and cus
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/carbon-generator.git
-cd carbon-generator
+git clone https://github.com/CpmJhon21/Web-carbon-jhon.git
+cd Web-carbon-jhon
 
 # Install dependencies
 cd backend
